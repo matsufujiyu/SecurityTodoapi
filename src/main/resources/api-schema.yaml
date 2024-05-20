@@ -1,0 +1,385 @@
+openapi: "3.0.0"
+info:
+  title: TODO List API
+  version: "1.1.1"
+  description: RESTful TODO List API with Authentication
+tags:
+  - name: User
+    description: Operations related to user
+  - name: Todos
+    description: Operations related to todos
+paths:
+  /user/register:
+    post:
+      summary: Register a new user
+      operationId: userLegis
+      tags:
+      - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegister"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequestError"
+  /user/login:
+    post:
+      summary: User login
+      operationId: userLog
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequestError"
+  /user/logout:
+    post:
+      summary: User logout
+      operationId: userLogout
+      tags:
+        - User
+      responses:
+        '200':
+          description: Logout successful
+        400:
+          description: Unautorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequestError"
+  /todos:
+    get:
+      summary: Retrieve list of TODOs
+      description:
+      operationId: listTodos
+      tags:
+        - Todos
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          description: "リストに含まれるリソースの最大値"
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: offset
+          in: query
+          required: true
+          description: "オフセット"
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: "List of TODOs"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TodoListDTO"
+        '400':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequestError"
+    post:
+      summary: create a new TODO
+      description:
+      operationId: createTodo
+      tags:
+        - Todos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TodoWithoutId"
+      responses:
+        201:
+          description: TODO created
+          headers:
+            location:
+              description: "作成されたリソースのURI"
+              schema:
+                  type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+        400:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequestError"
+
+  /todos/{id}:
+    get:
+      summary: Retrieve a TODO by ID
+      tags:
+       - Todos
+      operationId: showTodo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Single TODO
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+        '400':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequestError"
+        '404':
+          description: TODO not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update a TODO
+      description:
+      operationId: "editTodo"
+      tags:
+        - Todos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: id
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TodoWithoutId"
+      responses:
+        '200':
+          description: TODO updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+        '400':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequestError"
+        '404':
+          description: TODO not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete a TODO by ID
+      operationId: "deleteTodo"
+      tags:
+        - Todos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: id
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '204':
+          description: TODO deleted
+        '400':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequestError"
+        '404':
+          description: TODO not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        userId:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+
+    UserRegister:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+    UserLogin:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+    Todo:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        status:
+          type: string
+        details:
+          type: string
+      required:
+        - id
+        - title
+        - status
+        - details
+    PageDTO:
+      description: "ページ情報"
+      type: object
+      properties:
+        limit:
+          description: "リクエストされたLimit"
+          type: integer
+          format: int32
+        offset:
+          description: "リクエストされた　Offset"
+          type: integer
+          format: int64
+        size:
+          description: "取得できた件数"
+          type: integer
+          format: int32
+      required:
+        - limit
+        - offset
+        - size
+    TodoListDTO:
+      description: "リスト"
+      type: object
+      properties:
+        page:
+          $ref: "#/components/schemas/PageDTO"
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/Todo"
+      required:
+        - results
+    TodoWithoutId:
+      type: object
+      properties:
+        userId:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+        details:
+          type: string
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          default: "Resource Not Found"
+        message:
+          type: string
+    BadRequestError:
+      description: "リクエストが不正"
+      type: object
+      properties:
+        title:
+          type: string
+          description: "エラーのタイトル"
+          default: "Bad Request"
+        detail:
+          type: string
+          description: "エラーの詳細"
+          default: "リクエストが不正です。正しいリクエストでリトライしてください"
+        invalid-params:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvalidParam"
+      required:
+          - title
+          - detail
+          - invalid-params
+    InvalidParam:
+      description: "不正なリクエストについての詳細"
+      type: object
+      properties:
+        name:
+          type: string
+          description: "エラーが発生したフィールド名"
+        reason:
+          type: string
+          description: "エラーの理由"
+      required:
+          - name
+          - reason
+
